@@ -46,6 +46,8 @@ namespace ego_planner
 
     bool checkCollision(int drone_id);
     
+    std::vector<Eigen::Vector3d> getGlobalTrajectory(double resolution = 0.1) const;
+
 
     PlanParameters pp_;
     LocalTrajData local_data_;

@@ -15,7 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   quadrotor_msgs
   plan_env
-  path_searching
+  path_searching_ego_planner
   bspline_opt
   traj_utils
   message_generation
@@ -26,7 +26,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES ego_planner
- CATKIN_DEPENDS plan_env path_searching bspline_opt traj_utils 
+ CATKIN_DEPENDS plan_env path_searching_ego_planner bspline_opt traj_utils 
 #  DEPENDS system_lib
 )
 

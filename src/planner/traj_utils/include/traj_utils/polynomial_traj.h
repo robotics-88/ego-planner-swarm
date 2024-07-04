@@ -73,7 +73,7 @@ public:
     return empty;
   }
 
-  Eigen::Vector3d evaluate(double t)
+  Eigen::Vector3d evaluate(double t) const
   {
     /* detetrmine segment num */
     int idx = 0;
@@ -160,7 +160,7 @@ public:
   }
 
   /* for evaluating traj, should be called in sequence!!! */
-  double getTimeSum()
+  double getTimeSum() const
   {
     return this->time_sum;
   }

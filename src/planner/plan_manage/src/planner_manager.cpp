@@ -29,10 +29,6 @@ namespace ego_planner
     grid_map_.reset(new GridMap);
     grid_map_->initMap(nh);
 
-    // obj_predictor_.reset(new fast_planner::ObjPredictor(nh));
-    // obj_predictor_->init();
-    // obj_pub_ = nh.advertise<visualization_msgs::Marker>("/dynamic/obj_prdi", 10); // zx-todo
-
     bspline_optimizer_.reset(new BsplineOptimizer);
     bspline_optimizer_->setParam(nh);
     bspline_optimizer_->setEnvironment(grid_map_, obj_predictor_);
@@ -374,6 +370,15 @@ namespace ego_planner
     return false;
   }
 
+  std::vector<Eigen::Vector3d> EGOPlannerManager::getGlobalTrajectory(double resolution) const {
+    std::vector<Eigen::Vector3d> trajectory_points;
+    double duration = global_data_.global_traj_.getTimeSum();
+    for (double t = 0; t <= duration; t += resolution) {
+        trajectory_points.push_back(global_data_.global_traj_.evaluate(t));
+    }
+    return trajectory_points;
+  }
+
   bool EGOPlannerManager::planGlobalTrajWaypoints(const Eigen::Vector3d &start_pos, const Eigen::Vector3d &start_vel, const Eigen::Vector3d &start_acc,
                                                   const std::vector<Eigen::Vector3d> &waypoints, const Eigen::Vector3d &end_vel, const Eigen::Vector3d &end_acc)
   {
@@ -418,11 +423,6 @@ namespace ego_planner
     }
 
     inter_points.push_back(points.back());
-
-    // for ( int i=0; i<inter_points.size(); i++ )
-    // {
-    //   cout << inter_points[i].transpose() << endl;
-    // }
 
     // write position matrix
     int pt_num = inter_points.size();

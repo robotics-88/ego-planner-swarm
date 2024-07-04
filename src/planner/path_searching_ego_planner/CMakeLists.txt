@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(bspline_opt)
+project(path_searching_ego_planner)
 
 set(CMAKE_BUILD_TYPE "Release")
 ADD_COMPILE_OPTIONS(-std=c++11 )
@@ -16,14 +16,13 @@ find_package(catkin REQUIRED COMPONENTS
   visualization_msgs
   plan_env
   cv_bridge
-  traj_utils
-  path_searching_ego_planner
 )
+
 
 catkin_package(
  INCLUDE_DIRS include
- LIBRARIES bspline_opt
- CATKIN_DEPENDS plan_env 
+ LIBRARIES path_searching_ego_planner
+ CATKIN_DEPENDS plan_env
 #  DEPENDS system_lib
 )
 
@@ -35,11 +34,9 @@ include_directories(
     ${PCL_INCLUDE_DIRS}
 )
 
-add_library( bspline_opt 
-    src/uniform_bspline.cpp 
-    src/bspline_optimizer.cpp 
-    src/gradient_descent_optimizer.cpp
+add_library( path_searching_ego_planner 
+    src/dyn_a_star.cpp
     )
-target_link_libraries( bspline_opt
+target_link_libraries( path_searching_ego_planner
     ${catkin_LIBRARIES} 
     )  
