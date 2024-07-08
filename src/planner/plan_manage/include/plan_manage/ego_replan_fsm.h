@@ -63,6 +63,7 @@ namespace ego_planner
     bool flag_realworld_experiment_;
     bool enable_fail_safe_;
     Eigen::Vector3d goal_pt_;  // Goal position for planning
+    std::vector<Eigen::Vector3d> goals_;  // Vector to store previous and current goals
 
     /* planning data */
     bool have_trigger_, have_target_, have_odom_, have_new_target_, have_recv_pre_agent_;

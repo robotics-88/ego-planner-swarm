@@ -106,22 +106,36 @@ namespace ego_planner
     }
   }
 
-  void EGOReplanFSM::planPathToGoal(const Eigen::Vector3d& goal) {
-    if (!have_odom_) {
-        ROS_WARN("Odometry not available, cannot plan.");
-        return;
+  void EGOReplanFSM::planPathToGoal(const Eigen::Vector3d& new_goal) {
+        if (!have_odom_) {
+            ROS_WARN("Odometry not available, cannot plan.");
+            return;
+        }
+
+        // Check if there is a previous goal, if not add the new goal as the first element
+        if (goals_.empty()) {
+            goals_.push_back(new_goal);
+        } else {
+            // Replace the last goal with the new goal and ensure the vector only holds the last two goals
+            if (goals_.size() == 2) {
+                goals_[0] = goals_[1];  // Move current goal to previous
+            }
+            goals_.back() = new_goal;  // Update the last element to the new goal
+        }
+
+        // Assume current goal is always the last element in the vector
+        Eigen::Vector3d current_goal = goals_.back();
+
+        bool success = planner_manager_->planGlobalTraj(odom_pos_, odom_vel_, Eigen::Vector3d::Zero(), current_goal, Eigen::Vector3d::Zero(), Eigen::Vector3d::Zero());
+        if (success) {
+            ROS_INFO("Path planning successful.");
+            auto traj = planner_manager_->getGlobalTrajectory();  // This method needs to be implemented
+            auto path_msg = convertTrajectoryToPath(traj, ros::Time::now(), "map");
+            path_pub_.publish(path_msg);
+        } else {
+            ROS_WARN("Failed to plan a path to the new goal.");
+        }
     }
-    
-    bool success = planner_manager_->planGlobalTraj(odom_pos_, odom_vel_, Eigen::Vector3d::Zero(), goal, Eigen::Vector3d::Zero(), Eigen::Vector3d::Zero());
-    if (success) {
-        ROS_INFO("Path planning successful.");
-        auto traj = planner_manager_->getGlobalTrajectory(); // This would need to be implemented
-        auto path_msg = convertTrajectoryToPath(traj, ros::Time::now(), "map");
-        path_pub_.publish(path_msg);
-    } else {
-        ROS_WARN("Failed to plan a path to the new goal.");
-    }
-  }
 
   nav_msgs::Path EGOReplanFSM::convertTrajectoryToPath(const std::vector<Eigen::Vector3d>& waypoints, const ros::Time& stamp, const std::string& frame_id) 
   {
