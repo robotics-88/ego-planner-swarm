@@ -12,18 +12,18 @@ namespace ego_planner
 
   EGOPlannerManager::~EGOPlannerManager() {}
 
-  void EGOPlannerManager::initPlanModules(ros::NodeHandle &nh, PlanningVisualization::Ptr vis)
+  void EGOPlannerManager::initPlanModules(ros::NodeHandle &nh)
   {
     /* read algorithm parameters */
 
-    nh.param("manager/max_vel", pp_.max_vel_, -1.0);
-    nh.param("manager/max_acc", pp_.max_acc_, -1.0);
-    nh.param("manager/max_jerk", pp_.max_jerk_, -1.0);
-    nh.param("manager/feasibility_tolerance", pp_.feasibility_tolerance_, 0.0);
-    nh.param("manager/control_points_distance", pp_.ctrl_pt_dist, -1.0);
-    nh.param("manager/planning_horizon", pp_.planning_horizen_, 5.0);
-    nh.param("manager/use_distinctive_trajs", pp_.use_distinctive_trajs, false);
-    nh.param("manager/drone_id", pp_.drone_id, -1);
+    nh.param("search/max_vel", pp_.max_vel_, -1.0);
+    nh.param("search/max_acc", pp_.max_acc_, -1.0);
+    nh.param("search/max_jerk", pp_.max_jerk_, -1.0);
+    nh.param("search/feasibility_tolerance", pp_.feasibility_tolerance_, 0.0);
+    nh.param("search/control_points_distance", pp_.ctrl_pt_dist, -1.0);
+    nh.param("search/planning_horizon", pp_.planning_horizen_, 5.0);
+    nh.param("search/use_distinctive_trajs", pp_.use_distinctive_trajs, false);
+    nh.param("search/drone_id", pp_.drone_id, -1);
 
     local_data_.traj_id_ = 0;
     grid_map_.reset(new GridMap);
@@ -34,8 +34,6 @@ namespace ego_planner
     bspline_optimizer_->setEnvironment(grid_map_, obj_predictor_);
     bspline_optimizer_->a_star_.reset(new AStar);
     bspline_optimizer_->a_star_->initGridMap(grid_map_, Eigen::Vector3i(100, 100, 100));
-
-    visualization_ = vis;
   }
 
   // !SECTION
@@ -49,28 +47,31 @@ namespace ego_planner
     static int count = 0;
     printf("\033[47;30m\n[drone %d replan %d]==============================================\033[0m\n", pp_.drone_id, count++);
     // cout.precision(3);
-    // cout << "start: " << start_pt.transpose() << ", " << start_vel.transpose() << "\ngoal:" << local_target_pt.transpose() << ", " << local_target_vel.transpose()
-    //      << endl;
+    cout << "start: " << start_pt.transpose() << ", " << start_vel.transpose() << "\ngoal:" << local_target_pt.transpose() << ", " << local_target_vel.transpose()
+         << endl;
 
     if ((start_pt - local_target_pt).norm() < 0.2)
     {
-      cout << "Close to goal" << endl;
+      // cout << "Close to goal" << endl;
       continous_failures_count_++;
       return false;
     }
 
     bspline_optimizer_->setLocalTargetPt(local_target_pt);
+    // cout << "bspline optimizer after that line" << endl;
 
     ros::Time t_start = ros::Time::now();
     ros::Duration t_init, t_opt, t_refine;
 
     /*** STEP 1: INIT ***/
+    // cout << "init step 1" << endl;
     double ts = (start_pt - local_target_pt).norm() > 0.1 ? pp_.ctrl_pt_dist / pp_.max_vel_ * 1.5 : pp_.ctrl_pt_dist / pp_.max_vel_ * 5; // pp_.ctrl_pt_dist / pp_.max_vel_ is too tense, and will surely exceed the acc/vel limits
     vector<Eigen::Vector3d> point_set, start_end_derivatives;
     static bool flag_first_call = true, flag_force_polynomial = false;
     bool flag_regenerate = false;
     do
     {
+      // cout << "inside do" << endl;
       point_set.clear();
       start_end_derivatives.clear();
       flag_regenerate = false;
@@ -88,6 +89,7 @@ namespace ego_planner
         if (!flag_randomPolyTraj)
         {
           gl_traj = PolynomialTraj::one_segment_traj_gen(start_pt, start_vel, start_acc, local_target_pt, local_target_vel, Eigen::Vector3d::Zero(), time);
+          // cout << "!flag_randomPolyTraj" << endl;
         }
         else
         {
@@ -103,6 +105,7 @@ namespace ego_planner
           Eigen::VectorXd t(2);
           t(0) = t(1) = time / 2;
           gl_traj = PolynomialTraj::minSnapTraj(pos, start_vel, local_target_vel, start_acc, Eigen::Vector3d::Zero(), t);
+          // cout << "flag_randomPolyTraj else" << endl;
         }
 
         double t;
@@ -110,6 +113,7 @@ namespace ego_planner
         ts *= 1.5; // ts will be divided by 1.5 in the next
         do
         {
+          // cout << "second do idk whats this for" << endl;
           ts /= 1.5;
           point_set.clear();
           flag_too_far = false;
@@ -126,15 +130,17 @@ namespace ego_planner
             point_set.push_back(pt);
           }
         } while (flag_too_far || point_set.size() < 7); // To make sure the initial path has enough points.
+        // cout << "outside inital path do while loop" << endl;
         t -= ts;
         start_end_derivatives.push_back(gl_traj.evaluateVel(0));
         start_end_derivatives.push_back(local_target_vel);
         start_end_derivatives.push_back(gl_traj.evaluateAcc(0));
         start_end_derivatives.push_back(gl_traj.evaluateAcc(t));
+        // cout << "start end derivatives initialized\n";
       }
       else // Initial path generated from previous trajectory.
       {
-
+        // cout << "initial path generate from prev traj else" << endl;
         double t;
         double t_cur = (ros::Time::now() - local_data_.start_time_).toSec();
 
@@ -143,6 +149,7 @@ namespace ego_planner
         pseudo_arc_length.push_back(0.0);
         for (t = t_cur; t < local_data_.duration_ + 1e-3; t += ts)
         {
+          // cout << "for loop else statement" << endl;
           segment_point.push_back(local_data_.position_traj_.evaluateDeBoorT(t));
           if (t > t_cur)
           {
@@ -154,10 +161,13 @@ namespace ego_planner
         double poly_time = (local_data_.position_traj_.evaluateDeBoorT(t) - local_target_pt).norm() / pp_.max_vel_ * 2;
         if (poly_time > ts)
         {
+          // cout << "poly time > ts if statemenet" << endl;
           PolynomialTraj gl_traj = PolynomialTraj::one_segment_traj_gen(local_data_.position_traj_.evaluateDeBoorT(t),
                                                                         local_data_.velocity_traj_.evaluateDeBoorT(t),
                                                                         local_data_.acceleration_traj_.evaluateDeBoorT(t),
                                                                         local_target_pt, local_target_vel, Eigen::Vector3d::Zero(), poly_time);
+
+          // cout << "gl_traj calculated" << endl;
 
           for (t = ts; t < poly_time; t += ts)
           {
@@ -180,28 +190,37 @@ namespace ego_planner
         size_t id = 0;
         do
         {
+          // cout << "inside the second do while loop" << endl;
           cps_dist /= 1.5;
           point_set.clear();
           sample_length = 0;
           id = 0;
           while ((id <= pseudo_arc_length.size() - 2) && sample_length <= pseudo_arc_length.back())
           {
+            // cout << "inside do while while loop inside" << endl;
             if (sample_length >= pseudo_arc_length[id] && sample_length < pseudo_arc_length[id + 1])
             {
+              // cout << "if of do while while" << endl;
               point_set.push_back((sample_length - pseudo_arc_length[id]) / (pseudo_arc_length[id + 1] - pseudo_arc_length[id]) * segment_point[id + 1] +
                                   (pseudo_arc_length[id + 1] - sample_length) / (pseudo_arc_length[id + 1] - pseudo_arc_length[id]) * segment_point[id]);
               sample_length += cps_dist;
             }
             else
+            {
               id++;
+              // cout << "else of do while while" << endl;
+            }
           }
           point_set.push_back(local_target_pt);
+          // cout << "do while loop again" << endl;
         } while (point_set.size() < 7); // If the start point is very close to end point, this will help
 
+        // cout << "outside some do while loop" << endl;
         start_end_derivatives.push_back(local_data_.velocity_traj_.evaluateDeBoorT(t_cur));
         start_end_derivatives.push_back(local_target_vel);
         start_end_derivatives.push_back(local_data_.acceleration_traj_.evaluateDeBoorT(t_cur));
         start_end_derivatives.push_back(Eigen::Vector3d::Zero());
+        // cout << "start end derivative initialized" << endl;
 
         if (point_set.size() > pp_.planning_horizen_ / pp_.ctrl_pt_dist * 3) // The initial path is unnormally too long!
         {
@@ -209,20 +228,23 @@ namespace ego_planner
           flag_regenerate = true;
         }
       }
+      // cout << "if else over\n";
     } while (flag_regenerate);
 
+    // cout << "outermost do while loop outside\n";
     Eigen::MatrixXd ctrl_pts, ctrl_pts_temp;
     UniformBspline::parameterizeToBspline(ts, point_set, start_end_derivatives, ctrl_pts);
 
     vector<std::pair<int, int>> segments;
+    // cout << "control pnts init" << endl;
     segments = bspline_optimizer_->initControlPoints(ctrl_pts, true);
 
     t_init = ros::Time::now() - t_start;
     t_start = ros::Time::now();
 
     /*** STEP 2: OPTIMIZE ***/
+    // cout << "step 2 optimize" << endl;
     bool flag_step_1_success = false;
-    vector<vector<Eigen::Vector3d>> vis_trajs;
 
     if (pp_.use_distinctive_trajs)
     {
@@ -237,7 +259,7 @@ namespace ego_planner
         if (bspline_optimizer_->BsplineOptimizeTrajRebound(ctrl_pts_temp, final_cost, trajs[i], ts))
         {
 
-          cout << "traj " << trajs.size() - i << " success." << endl;
+          // cout << "traj " << trajs.size() - i << " success." << endl;
 
           flag_step_1_success = true;
           if (final_cost < min_cost)
@@ -252,7 +274,6 @@ namespace ego_planner
           {
             point_set.push_back(ctrl_pts_temp.col(j));
           }
-          vis_trajs.push_back(point_set);
         }
         else
         {
@@ -261,21 +282,16 @@ namespace ego_planner
       }
 
       t_opt = ros::Time::now() - t_start;
-
-      visualization_->displayMultiInitPathList(vis_trajs, 0.2); // This visuallization will take up several milliseconds.
     }
     else
     {
       flag_step_1_success = bspline_optimizer_->BsplineOptimizeTrajRebound(ctrl_pts, ts);
       t_opt = ros::Time::now() - t_start;
-      //static int vis_id = 0;
-      visualization_->displayInitPathList(point_set, 0.2, 0);
     }
 
-    cout << "plan_success=" << flag_step_1_success << endl;
+    // cout << "plan_success=" << flag_step_1_success << endl;
     if (!flag_step_1_success)
     {
-      visualization_->displayOptimalList(ctrl_pts, 0);
       continous_failures_count_++;
       return false;
     }
@@ -287,6 +303,7 @@ namespace ego_planner
 
     /*** STEP 3: REFINE(RE-ALLOCATE TIME) IF NECESSARY ***/
     // Note: Only adjust time in single drone mode. But we still allow drone_0 to adjust its time profile.
+    // cout << "step 3" << endl;
     if (pp_.drone_id <= 0)
     {
 
@@ -323,6 +340,7 @@ namespace ego_planner
 
     // save planned results
     updateTrajInfo(pos, ros::Time::now());
+    // cout << "updated Traj info" << endl;
 
     static double sum_time = 0;
     static int count_success = 0;
@@ -332,6 +350,7 @@ namespace ego_planner
 
     // success. YoY
     continous_failures_count_ = 0;
+    // cout << "success in rebound Replan wohoooooooo" << endl;
     return true;
   }
 
@@ -370,14 +389,30 @@ namespace ego_planner
     return false;
   }
 
-  std::vector<Eigen::Vector3d> EGOPlannerManager::getGlobalTrajectory(double resolution) const {
-    std::vector<Eigen::Vector3d> trajectory_points;
-    double duration = global_data_.global_traj_.getTimeSum();
-    for (double t = 0; t <= duration; t += resolution) {
-        trajectory_points.push_back(global_data_.global_traj_.evaluate(t));
-    }
-    return trajectory_points;
-  }
+  // std::vector<Eigen::Vector3d> EGOPlannerManager::getGlobalTrajectory(double resolution) const {
+  //   std::vector<Eigen::Vector3d> trajectory_points;
+  //   double duration = global_data_.global_traj_.getTimeSum();
+  //   ROS_INFO("Entered getGlobalTrajectory, got duration: %f", duration);
+
+  //   if (duration < 0) {
+  //       ROS_WARN("Invalid trajectory duration: %f. Check trajectory initialization.", duration);
+  //       return trajectory_points;  // Return empty vector to avoid further processing
+  //   }
+
+  //   for (double t = 0; t <= duration; t += resolution) {
+  //       Eigen::Vector3d point = global_data_.global_traj_.evaluate(t);
+  //       trajectory_points.push_back(point);
+  //       ROS_INFO_STREAM("Time: " << t << " -> Trajectory Point (x, y, z): ("
+  //                       << point.x() << ", " 
+  //                       << point.y() << ", " 
+  //                       << point.z() << ")");
+  //   }
+
+  //   ROS_INFO("Returning from getGlobalTrajectory with %lu points", trajectory_points.size());
+  //   return trajectory_points;
+  // }
+
+
 
   bool EGOPlannerManager::planGlobalTrajWaypoints(const Eigen::Vector3d &start_pos, const Eigen::Vector3d &start_vel, const Eigen::Vector3d &start_acc,
                                                   const std::vector<Eigen::Vector3d> &waypoints, const Eigen::Vector3d &end_vel, const Eigen::Vector3d &end_acc)
@@ -467,7 +502,7 @@ namespace ego_planner
     // insert intermediate points if too far
     vector<Eigen::Vector3d> inter_points;
     const double dist_thresh = 4.0;
-
+    cout << "Entering loop for inter_points" << endl;
     for (size_t i = 0; i < points.size() - 1; ++i)
     {
       inter_points.push_back(points.at(i));
@@ -476,7 +511,7 @@ namespace ego_planner
       if (dist > dist_thresh)
       {
         int id_num = floor(dist / dist_thresh) + 1;
-
+        cout << "id_num: " << id_num << endl;
         for (int j = 1; j < id_num; ++j)
         {
           Eigen::Vector3d inter_pt =
@@ -490,16 +525,22 @@ namespace ego_planner
 
     // write position matrix
     int pt_num = inter_points.size();
+    // cout << "inter points size: " << pt_num << endl;
     Eigen::MatrixXd pos(3, pt_num);
-    for (int i = 0; i < pt_num; ++i)
+    for (int i = 0; i < pt_num; ++i) {
       pos.col(i) = inter_points[i];
+      // cout << pos.col(i) << endl;
+    }
 
     Eigen::Vector3d zero(0, 0, 0);
     Eigen::VectorXd time(pt_num - 1);
     for (int i = 0; i < pt_num - 1; ++i)
     {
       time(i) = (pos.col(i + 1) - pos.col(i)).norm() / (pp_.max_vel_);
+      // cout << "max vel: " << pp_.max_vel_;
+      // cout << "time("<< i << "): " << time(i) << endl;
     }
+    // cout << "time after all of this: " << time(time.rows()-1) << endl;
 
     time(0) *= 2.0;
     time(time.rows() - 1) *= 2.0;
@@ -512,9 +553,10 @@ namespace ego_planner
     else
       return false;
 
+    // cout << "some traj generated" << endl;
     auto time_now = ros::Time::now();
     global_data_.setGlobalTraj(gl_traj, time_now);
-
+    // cout << "global data set" << endl;
     return true;
   }
 

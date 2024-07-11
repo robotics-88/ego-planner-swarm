@@ -64,6 +64,7 @@ namespace ego_planner
     bool enable_fail_safe_;
     Eigen::Vector3d goal_pt_;  // Goal position for planning
     std::vector<Eigen::Vector3d> goals_;  // Vector to store previous and current goals
+    float goal_tolerance_;
 
     /* planning data */
     bool have_trigger_, have_target_, have_odom_, have_new_target_, have_recv_pre_agent_;
@@ -85,7 +86,7 @@ namespace ego_planner
     ros::NodeHandle node_;
     ros::Timer exec_timer_, safety_timer_;
     ros::Subscriber waypoint_sub_, odom_sub_, swarm_trajs_sub_, broadcast_bspline_sub_, trigger_sub_;
-    ros::Subscriber goal_sub;
+    // ros::Subscriber goal_sub;
     ros::Publisher replan_pub_, new_pub_, bspline_pub_, data_disp_pub_, swarm_trajs_pub_, broadcast_bspline_pub_;
     ros::Publisher path_pub_;
 
@@ -107,14 +108,16 @@ namespace ego_planner
     /* ROS functions */
     void execFSMCallback(const ros::TimerEvent &e);
     void checkCollisionCallback(const ros::TimerEvent &e);
-    void waypointCallback(const geometry_msgs::PoseStampedPtr &msg);
+    void waypointCallback(const geometry_msgs::PoseStamped &msg);
+    // void waypointCallback(const geometry_msgs::PoseStampedPtr &msg);
     void triggerCallback(const geometry_msgs::PoseStampedPtr &msg);
     void odometryCallback(const nav_msgs::OdometryConstPtr &msg);
     void swarmTrajsCallback(const traj_utils::MultiBsplinesPtr &msg);
     void BroadcastBsplineCallback(const traj_utils::BsplinePtr &msg);
-    void goalCb(const geometry_msgs::PoseStamped::ConstPtr& msg);
-    void planPathToGoal(const Eigen::Vector3d& goal);
-    nav_msgs::Path convertTrajectoryToPath(const std::vector<Eigen::Vector3d>& waypoints, const ros::Time& stamp, const std::string& frame_id);
+    // void goalCb(const geometry_msgs::PoseStamped::ConstPtr& msg);
+    // void planPathToGoal(const Eigen::Vector3d& goal);
+    // bool isGoalAchieved(const Eigen::Vector3d& goal);
+    // nav_msgs::Path convertTrajectoryToPath(const std::vector<Eigen::Vector3d>& waypoints, const ros::Time& stamp, const std::string& frame_id);
     
     bool checkCollision();
     void publishSwarmTrajs(bool startup_pub);

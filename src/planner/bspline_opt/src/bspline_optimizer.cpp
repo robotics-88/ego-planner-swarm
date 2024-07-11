@@ -69,18 +69,6 @@ namespace ego_planner
       RichInfoOneSeg.first = RichInfoOneSeg_temp;
       RichInfoOneSeg.second = RichInfoOneSeg_temp;
       RichInfoSegs.push_back(RichInfoOneSeg);
-
-      // cout << "RichInfoOneSeg_temp, out" << endl;
-      // cout << "RichInfoSegs[" << i << "].first" << endl;
-      // for ( int k=0; k<RichInfoOneSeg_temp.size; k++ )
-      //   if ( RichInfoOneSeg_temp.base_point[k].size() > 0 )
-      //   {
-      //     cout << "###" << RichInfoOneSeg_temp.points.col(k).transpose() << endl;
-      //     for (int k2 = 0; k2 < RichInfoOneSeg_temp.base_point[k].size(); k2++)
-      //     {
-      //       cout << "      " << RichInfoOneSeg_temp.base_point[k][k2].transpose() << " @ " << RichInfoOneSeg_temp.direction[k][k2].transpose() << endl;
-      //     }
-      //   }
     }
 
     for (int i = 0; i < seg_upbound; i++)
@@ -141,19 +129,6 @@ namespace ego_planner
           i--;
 
           continue;
-
-          // cout << "RichInfoSegs[" << i << "].first" << endl;
-          // for (int k = 0; k < RichInfoSegs[i].first.size; k++)
-          // {
-          //   if (RichInfoSegs[i].first.base_point.size() > 0)
-          //   {
-          //     cout << "###" << RichInfoSegs[i].first.points.col(k).transpose() << endl;
-          //     for (int k2 = 0; k2 < RichInfoSegs[i].first.base_point[k].size(); k2++)
-          //     {
-          //       cout << "      " << RichInfoSegs[i].first.base_point[k][k2].transpose() << " @ " << RichInfoSegs[i].first.direction[k][k2].transpose() << endl;
-          //     }
-          //   }
-          // }
         }
 
         // 1.2 Reverse the vector and find new base points from occ_start_id to occ_end_id.
@@ -360,20 +335,6 @@ namespace ego_planner
       int cp_id = 0, seg_id = 0, cp_of_seg_id = 0;
       while (/*seg_id < RichInfoSegs.size() ||*/ cp_id < cps_.size)
       {
-        //cout << "A ";
-        // if ( seg_id >= RichInfoSegs.size() )
-        // {
-        //   cout << "seg_id=" << seg_id << " RichInfoSegs.size()=" << RichInfoSegs.size() << endl;
-        // }
-        // if ( cp_id >= cps_.base_point.size() )
-        // {
-        //   cout << "cp_id=" << cp_id << " cps_.base_point.size()=" << cps_.base_point.size() << endl;
-        // }
-        // if ( cp_of_seg_id >= RichInfoSegs[seg_id].first.base_point.size() )
-        // {
-        //   cout << "cp_of_seg_id=" << cp_of_seg_id << " RichInfoSegs[seg_id].first.base_point.size()=" << RichInfoSegs[seg_id].first.base_point.size() << endl;
-        // }
-
         if (seg_id >= seg_upbound || cp_id < segments[seg_id].first || cp_id > segments[seg_id].second)
         {
           cpsOneSample.points.col(cp_id) = cps_.points.col(cp_id);
@@ -436,12 +397,14 @@ namespace ego_planner
 
     if (flag_first_init)
     {
+      cout << "inside if" << endl;
       cps_.clearance = dist0_;
       cps_.resize(init_points.cols());
       cps_.points = init_points;
     }
 
     /*** Segment the initial trajectory according to obstacles ***/
+    cout << "segmenting initil traj" << endl;
     constexpr int ENOUGH_INTERVAL = 2;
     double step_size = grid_map_->getResolution() / ((init_points.col(0) - init_points.rightCols(1)).norm() / (init_points.cols() - 1)) / 1.5;
     int in_id = -1, out_id = -1;
@@ -452,16 +415,15 @@ namespace ego_planner
     int i_end = (int)init_points.cols() - order_ - ((int)init_points.cols() - 2 * order_) / 3; // only check closed 2/3 points.
     for (int i = order_; i <= i_end; ++i)
     {
+      // cout << "enterinf for loop\n";
       //cout << " *" << i-1 << "*" ;
       for (double a = 1.0; a > 0.0; a -= step_size)
       {
         occ = grid_map_->getInflateOccupancy(a * init_points.col(i - 1) + (1 - a) * init_points.col(i));
-        //cout << " " << occ;
-        // cout << setprecision(5);
-        // cout << (a * init_points.col(i-1) + (1-a) * init_points.col(i)).transpose() << " occ1=" << occ << endl;
-
+        // cout << "occ map generated\n";
         if (occ && !last_occ)
         {
+          cout << "1st if\n";
           if (same_occ_state_times > ENOUGH_INTERVAL || i == order_)
           {
             in_id = i - 1;
@@ -472,17 +434,20 @@ namespace ego_planner
         }
         else if (!occ && last_occ)
         {
+          // cout << "elseif 1\n";
           out_id = i;
           flag_got_end_maybe = true;
           same_occ_state_times = 0;
         }
         else
         {
+          // cout << "else\n";
           ++same_occ_state_times;
         }
 
         if (flag_got_end_maybe && (same_occ_state_times > ENOUGH_INTERVAL || (i == (int)init_points.cols() - order_)))
         {
+          // cout << "2nd if\n"; 
           flag_got_end_maybe = false;
           flag_got_end = true;
         }
@@ -491,27 +456,24 @@ namespace ego_planner
 
         if (flag_got_start && flag_got_end)
         {
+          // cout << "3rd if\n";
           flag_got_start = false;
           flag_got_end = false;
           segment_ids.push_back(std::pair<int, int>(in_id, out_id));
         }
       }
     }
-    // cout << endl;
-
-    // for (size_t i = 0; i < segment_ids.size(); i++)
-    // {
-    //   cout << "segment_ids=" << segment_ids[i].first << " ~ " << segment_ids[i].second << endl;
-    // }
 
     // return in advance
     if (segment_ids.size() == 0)
     {
       vector<std::pair<int, int>> blank_ret;
+      cout << "segment size is 0" << endl;
       return blank_ret;
     }
 
     /*** a star search ***/
+    // cout << "starting astar search\n";
     vector<vector<Eigen::Vector3d>> a_star_pathes;
     for (size_t i = 0; i < segment_ids.size(); ++i)
     {
@@ -531,6 +493,7 @@ namespace ego_planner
 
     /*** calculate bounds ***/
     int id_low_bound, id_up_bound;
+    cout << "calculatin bounds\n";
     vector<std::pair<int, int>> bounds(segment_ids.size());
     for (size_t i = 0; i < segment_ids.size(); i++)
     {
@@ -561,13 +524,8 @@ namespace ego_planner
       bounds[i] = std::pair<int, int>(id_low_bound, id_up_bound);
     }
 
-    // cout << "+++++++++" << endl;
-    // for ( int j=0; j<bounds.size(); ++j )
-    // {
-    //   cout << bounds[j].first << "  " << bounds[j].second << endl;
-    // }
-
     /*** Adjust segment length ***/
+    cout << "adjusting segment length\n";
     vector<std::pair<int, int>> adjusted_segment_ids(segment_ids.size());
     constexpr double MINIMUM_PERCENT = 0.0; // Each segment is guaranteed to have sufficient points to generate sufficient force
     int minimum_points = round(init_points.cols() * MINIMUM_PERCENT), num_points;
@@ -608,11 +566,14 @@ namespace ego_planner
     /*** Assign data to each segment ***/
     for (size_t i = 0; i < segment_ids.size(); i++)
     {
+      cout << "assinging data to eaxh segment\n";
       // step 1
+      cout << "entering step1\n";
       for (int j = adjusted_segment_ids[i].first; j <= adjusted_segment_ids[i].second; ++j)
         cps_.flag_temp[j] = false;
 
       // step 2
+      cout << "entering step 2\n";
       int got_intersection_id = -1;
       for (int j = segment_ids[i].first + 1; j < segment_ids[i].second; ++j)
       {
@@ -676,6 +637,7 @@ namespace ego_planner
       /* Corner case: the segment length is too short. Here the control points may outside the A* path, leading to opposite gradient direction. So I have to take special care of it */
       if (segment_ids[i].second - segment_ids[i].first == 1)
       {
+        cout << "corner case\n";
         Eigen::Vector3d ctrl_pts_law(init_points.col(segment_ids[i].second) - init_points.col(segment_ids[i].first)), intersection_point;
         Eigen::Vector3d middle_point = (init_points.col(segment_ids[i].second) + init_points.col(segment_ids[i].first)) / 2;
         int Astar_id = a_star_pathes[i].size() / 2, last_Astar_id; // Let "Astar_id = id_of_the_most_far_away_Astar_point" will be better, but it needs more computation
@@ -713,6 +675,7 @@ namespace ego_planner
       }
 
       //step 3
+      cout << "step3 in optimizer" << endl;
       if (got_intersection_id >= 0)
       {
         for (int j = got_intersection_id + 1; j <= adjusted_segment_ids[i].second; ++j)

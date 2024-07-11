@@ -66,16 +66,20 @@ namespace ego_planner
     {
       if (t >= -1e-3 && t <= local_start_time_)
       {
+        cout << "if stamenet getPosition" << endl;
         return global_traj_.evaluate(t - time_increase_ + last_time_inc_);
       }
       else if (t >= local_end_time_ && t <= global_duration_ + 1e-3)
       {
+        cout << "else if getPosition" << endl;
         return global_traj_.evaluate(t - time_increase_);
       }
       else
       {
+        cout << "calc evaluateDeBoor in getPosition" << endl;
         double tm, tmp;
         local_traj_[0].getTimeSpan(tm, tmp);
+        cout << "evaluateDeBoor output: " << local_traj_[0].evaluateDeBoor(tm + t - local_start_time_) << endl;
         return local_traj_[0].evaluateDeBoor(tm + t - local_start_time_);
       }
     }

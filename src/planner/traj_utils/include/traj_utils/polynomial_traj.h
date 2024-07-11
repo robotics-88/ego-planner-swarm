@@ -101,12 +101,14 @@ public:
   {
     /* detetrmine segment num */
     int idx = 0;
+    std::cout << "times: " << times[idx] << ", t: " << t << std::endl;
     while (times[idx] + 1e-4 < t)
     {
+      std::cout << "stuck in the while loop" << std::endl;
       t -= times[idx];
       ++idx;
     }
-
+    std::cout << "evalVel outside while\n";
     /* evaluation */
     int order = cxs[idx].size();
     Eigen::VectorXd vx(order - 1), vy(order - 1), vz(order - 1);
@@ -125,6 +127,7 @@ public:
 
     Eigen::Vector3d vel;
     vel(0) = tv.dot(vx), vel(1) = tv.dot(vy), vel(2) = tv.dot(vz);
+    std::cout << "vel generated\n";
     return vel;
   }
 
@@ -137,7 +140,7 @@ public:
       t -= times[idx];
       ++idx;
     }
-
+    std::cout << "acc outside while loop\n";
     /* evaluation */
     int order = cxs[idx].size();
     Eigen::VectorXd ax(order - 2), ay(order - 2), az(order - 2);
@@ -156,6 +159,7 @@ public:
 
     Eigen::Vector3d acc;
     acc(0) = tv.dot(ax), acc(1) = tv.dot(ay), acc(2) = tv.dot(az);
+    std::cout << "acc evaluated\n";
     return acc;
   }
 
