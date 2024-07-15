@@ -57,7 +57,7 @@ namespace ego_planner
     int target_type_; // 1 mannual select, 2 hard code
     double no_replan_thresh_, replan_thresh_;
     double waypoints_[50][3];
-    int waypoint_num_, wp_id_;
+    // int waypoint_num_, wp_id_;
     double planning_horizen_, planning_horizen_time_;
     double emergency_time_;
     bool flag_realworld_experiment_;
@@ -80,6 +80,9 @@ namespace ego_planner
     std::vector<Eigen::Vector3d> wps_;
     int current_wp_;
 
+    Eigen::Vector3d end_wp;
+    Eigen::Vector3d old_goal;
+
     bool flag_escape_emergency_;
 
     /* ROS utils */
@@ -101,7 +104,7 @@ namespace ego_planner
     std::pair<int, EGOReplanFSM::FSM_EXEC_STATE> timesOfConsecutiveStateCalls();
     void printFSMExecState();
 
-    void readGivenWps();
+    // void readGivenWps();
     void planNextWaypoint(const Eigen::Vector3d next_wp);
     void getLocalTarget();
 

@@ -71,7 +71,7 @@ namespace ego_planner
       }
       else if (t >= local_end_time_ && t <= global_duration_ + 1e-3)
       {
-        cout << "else if getPosition" << endl;
+        // cout << "else if getPosition" << endl;
         return global_traj_.evaluate(t - time_increase_);
       }
       else

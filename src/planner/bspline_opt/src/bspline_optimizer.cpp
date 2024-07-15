@@ -397,7 +397,7 @@ namespace ego_planner
 
     if (flag_first_init)
     {
-      cout << "inside if" << endl;
+      // cout << "inside if" << endl;
       cps_.clearance = dist0_;
       cps_.resize(init_points.cols());
       cps_.points = init_points;
@@ -468,7 +468,7 @@ namespace ego_planner
     if (segment_ids.size() == 0)
     {
       vector<std::pair<int, int>> blank_ret;
-      cout << "segment size is 0" << endl;
+      // cout << "segment size is 0" << endl;
       return blank_ret;
     }
 
