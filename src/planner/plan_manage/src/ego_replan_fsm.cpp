@@ -137,8 +137,10 @@ namespace ego_planner
           return;
 
       if(old_goal(0) == msg.pose.position.x && old_goal(1) == msg.pose.position.y && old_goal(2) == msg.pose.position.z)
+      {
+        have_target_ = false;
         return;
-
+      }
       // cout << "Planned next waypoint" << endl;
       cout << "Triggered! I changed this" << endl;
       cout << "odom_pos_ values: " << odom_pos_.transpose() << endl;
@@ -417,6 +419,7 @@ namespace ego_planner
           bool success = planFromGlobalTraj(10); // zx-todo
           if (success)
           {
+            // path_msg.poses.clear();
             changeFSMExecState(EXEC_TRAJ, "FSM");
 
             // publishSwarmTrajs(true);
@@ -481,15 +484,48 @@ namespace ego_planner
 
       Eigen::Vector3d pos = info->position_traj_.evaluateDeBoorT(t_cur);
 
-      if( (odom_pos_ - end_wp).norm() < 1e-1 )
+      cout << "start_pt_: " << start_pt_ << endl;
+      cout << "end_wp: " << end_wp << endl;
+      if( (start_pt_ - end_wp).norm() < 0.7 ) //! update this threshold
       {
+        cout << "reached target\n";
+        have_target_ = false;
+
+        auto info = &planner_manager_->local_data_;
+        path_msg.poses.clear();
+        constexpr double time_step = 0.01;  // Time step for evaluating the B-spline //! change to 0.01?
+
+        double t_start = 0.0;
+        double t_end = (ros::Time::now() - info->start_time_).toSec();
+    
+        path_msg.header.stamp = ros::Time::now();
+        path_msg.header.frame_id = "map";
+        path_pub_.publish(path_msg);
+
+        t_end = 5;
+        for (double t_cur = t_start; t_cur <= t_end; t_cur += time_step) {
+            Eigen::Vector3d p_cur = info->position_traj_.evaluateDeBoorT(t_cur);
+            geometry_msgs::PoseStamped pose_stamped;
+            pose_stamped.header = path_msg.header;
+            pose_stamped.pose.position.x = p_cur.x();
+            pose_stamped.pose.position.y = p_cur.y();
+            pose_stamped.pose.position.z = p_cur.z();
+            pose_stamped.pose.orientation.x = 0.;
+            pose_stamped.pose.orientation.y = 0.;
+            pose_stamped.pose.orientation.z = 0.;
+            pose_stamped.pose.orientation.w = 1.;
+            // We are not using pose_stamped.pose.orientation anywhere yet
+            path_msg.poses.push_back(pose_stamped);
+        }
+
+
         changeFSMExecState(WAIT_TARGET, "FSM");
         cout << "done planning\n";
-        goto force_return;
+        // goto force_return;
       }
 
       /* && (end_pt_ - pos).norm() < 0.5 */
-      if ((target_type_ == TARGET_TYPE::PRESET_TARGET) &&
+      else if ((target_type_ == TARGET_TYPE::PRESET_TARGET) &&
           // (wp_id_ < waypoint_num_ - 1) &&
           (end_pt_ - pos).norm() < no_replan_thresh_)
       {
@@ -554,6 +590,10 @@ namespace ego_planner
 
     data_disp_.header.stamp = ros::Time::now();
     data_disp_pub_.publish(data_disp_);
+
+    // path_msg.header.stamp = ros::Time::now();
+    // path_msg.header.frame_id = "map";
+    // path_pub_.publish(path_msg);
 
     force_return:;
     exec_timer_.start();
@@ -700,6 +740,7 @@ namespace ego_planner
   bool EGOReplanFSM::callReboundReplan(bool flag_use_poly_init, bool flag_randomPolyTraj)
   {
     // cout << "callReboundReplan!!! Finally we reached here!!!" << endl;
+    // if ((start_pt_ - local_target_pt_).norm() < 1e-1)
 
     getLocalTarget();
     // cout << "got local target" << endl;
@@ -751,29 +792,25 @@ namespace ego_planner
 
       /* 4. publish trajectory as nav_msgs/Path path */
       // cout << "we are going to publishhhh trajectory!!!!!!!!!!!\n";
-      constexpr double time_step = 0.01;  // Time step for evaluating the B-spline //! change to 0.01?
-      nav_msgs::Path path_msg;
-      path_msg.header.stamp = ros::Time::now();
-      path_msg.header.frame_id = "map";
+      // constexpr double time_step = 0.01;  // Time step for evaluating the B-spline //! change to 0.01?
 
-      double t_start = 0.0;
-      double t_end = (ros::Time::now() - info->start_time_).toSec();
-      for (double t_cur = t_start; t_cur <= t_end; t_cur += time_step) {
-          Eigen::Vector3d p_cur = info->position_traj_.evaluateDeBoorT(t_cur);
-          geometry_msgs::PoseStamped pose_stamped;
-          pose_stamped.header = path_msg.header;
-          pose_stamped.pose.position.x = p_cur.x();
-          pose_stamped.pose.position.y = p_cur.y();
-          pose_stamped.pose.position.z = p_cur.z();
-          pose_stamped.pose.orientation.x = 0.;
-          pose_stamped.pose.orientation.y = 0.;
-          pose_stamped.pose.orientation.z = 0.;
-          pose_stamped.pose.orientation.w = 1.;
-          // We are not using pose_stamped.pose.orientation anywhere yet
-          path_msg.poses.push_back(pose_stamped);
-      }
+      // double t_start = 0.0;
+      // double t_end = (ros::Time::now() - info->start_time_).toSec();
+      // for (double t_cur = t_start; t_cur <= t_end; t_cur += time_step) {
+      //     Eigen::Vector3d p_cur = info->position_traj_.evaluateDeBoorT(t_cur);
+      //     geometry_msgs::PoseStamped pose_stamped;
+      //     pose_stamped.header = path_msg.header;
+      //     pose_stamped.pose.position.x = p_cur.x();
+      //     pose_stamped.pose.position.y = p_cur.y();
+      //     pose_stamped.pose.position.z = p_cur.z();
+      //     pose_stamped.pose.orientation.x = 0.;
+      //     pose_stamped.pose.orientation.y = 0.;
+      //     pose_stamped.pose.orientation.z = 0.;
+      //     pose_stamped.pose.orientation.w = 1.;
+      //     // We are not using pose_stamped.pose.orientation anywhere yet
+      //     path_msg.poses.push_back(pose_stamped);
+      // }
 
-      path_pub_.publish(path_msg);
       // cout << "we are done $$$$$$$$$$$$$%%%%%%%%%%%%%%%%%%%%%%%%%%$\n";
       ROS_INFO("published traj");
     }
@@ -874,11 +911,12 @@ namespace ego_planner
 
     double t_step = planning_horizen_ / 20 / planner_manager_->pp_.max_vel_;
     double dist_min = 9999, dist_min_t = 0.0;
-    cout << "getLocalTarget before for loop" << endl;
+    // cout << "getLocalTarget before for loop" << endl;
     for (t = planner_manager_->global_data_.last_progress_time_; t < planner_manager_->global_data_.global_duration_; t += t_step)
     {
       Eigen::Vector3d pos_t = planner_manager_->global_data_.getPosition(t);
-      // cout << "pos_t: " << pos_t << endl;
+      // cout << "get local target pos_t: " << pos_t << endl;
+      // cout << "get local target start_pt_: " << start_pt_ << endl;
       double dist = (pos_t - start_pt_).norm();
       // cout << "before any if statememnt" << endl;
 

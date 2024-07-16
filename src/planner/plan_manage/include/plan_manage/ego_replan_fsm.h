@@ -56,7 +56,7 @@ namespace ego_planner
     /* parameters */
     int target_type_; // 1 mannual select, 2 hard code
     double no_replan_thresh_, replan_thresh_;
-    double waypoints_[50][3];
+    // double waypoints_[50][3];
     // int waypoint_num_, wp_id_;
     double planning_horizen_, planning_horizen_time_;
     double emergency_time_;
@@ -82,6 +82,8 @@ namespace ego_planner
 
     Eigen::Vector3d end_wp;
     Eigen::Vector3d old_goal;
+    nav_msgs::Path path_msg;
+
 
     bool flag_escape_emergency_;
 
