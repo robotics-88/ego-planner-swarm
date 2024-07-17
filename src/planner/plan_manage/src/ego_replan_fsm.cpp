@@ -493,16 +493,16 @@ namespace ego_planner
 
         auto info = &planner_manager_->local_data_;
         path_msg.poses.clear();
-        constexpr double time_step = 0.01;  // Time step for evaluating the B-spline //! change to 0.01?
+        constexpr double time_step = 1;  // Time step for evaluating the B-spline //! change to 0.01?
 
-        // double t_start = 0.0;
-        double t_start = info->start_time_.toSec();
+        double t_start = 0.0;
+        // double t_start = info->start_time_.toSec();
         double t_end = (ros::Time::now() - info->start_time_).toSec();
     
         path_msg.header.stamp = ros::Time::now();
         path_msg.header.frame_id = "map";
 
-        // t_end = 5;
+        t_end = 5;
         for (double t_cur = t_start; t_cur <= t_end; t_cur += time_step) {
             Eigen::Vector3d p_cur = info->position_traj_.evaluateDeBoorT(t_cur);
             // Eigen::Vector3d p_cur = info->position_traj_.evaluateDeBoorAtInterval(t_cur);
