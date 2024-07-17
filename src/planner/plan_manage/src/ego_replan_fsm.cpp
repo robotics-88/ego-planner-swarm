@@ -143,9 +143,9 @@ namespace ego_planner
       }
       // cout << "Planned next waypoint" << endl;
       cout << "Triggered! I changed this" << endl;
-      cout << "odom_pos_ values: " << odom_pos_.transpose() << endl;
+      // cout << "odom_pos_ values: " << odom_pos_.transpose() << endl;
       // init_pt_ = odom_pos_;
-      cout << "init_pt_done" << endl;
+      // cout << "init_pt_done" << endl;
       end_wp << msg.pose.position.x, msg.pose.position.y, msg.pose.position.z;
 
       cout << "Initialized end_wp" << endl;
@@ -495,16 +495,17 @@ namespace ego_planner
         path_msg.poses.clear();
         constexpr double time_step = 0.01;  // Time step for evaluating the B-spline //! change to 0.01?
 
-        double t_start = 0.0;
+        // double t_start = 0.0;
+        double t_start = info->start_time_.toSec();
         double t_end = (ros::Time::now() - info->start_time_).toSec();
     
         path_msg.header.stamp = ros::Time::now();
         path_msg.header.frame_id = "map";
-        path_pub_.publish(path_msg);
 
-        t_end = 5;
+        // t_end = 5;
         for (double t_cur = t_start; t_cur <= t_end; t_cur += time_step) {
             Eigen::Vector3d p_cur = info->position_traj_.evaluateDeBoorT(t_cur);
+            // Eigen::Vector3d p_cur = info->position_traj_.evaluateDeBoorAtInterval(t_cur);
             geometry_msgs::PoseStamped pose_stamped;
             pose_stamped.header = path_msg.header;
             pose_stamped.pose.position.x = p_cur.x();
@@ -517,7 +518,7 @@ namespace ego_planner
             // We are not using pose_stamped.pose.orientation anywhere yet
             path_msg.poses.push_back(pose_stamped);
         }
-
+        path_pub_.publish(path_msg);
 
         changeFSMExecState(WAIT_TARGET, "FSM");
         cout << "done planning\n";
