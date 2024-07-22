@@ -52,11 +52,11 @@ namespace ego_planner
     exec_timer_ = nh.createTimer(ros::Duration(0.01), &EGOReplanFSM::execFSMCallback, this);
     safety_timer_ = nh.createTimer(ros::Duration(0.05), &EGOReplanFSM::checkCollisionCallback, this);
 
-    // odom_sub_ = nh.subscribe("/mavros/odometry/out", 1, &EGOReplanFSM::odometryCallback, this);
+    odom_sub_ = nh.subscribe("/mavros/odometry/out", 1, &EGOReplanFSM::odometryCallback, this);
     nh.param<std::string>("search/pose_topic", pose_topic_, "/mavros/local_position/pose");
     // <geometry_msgs::PoseStamped>(pose_topic_, 100, boost::bind(&poseCb, _1, &planner_object));
 
-    odom_sub_ = nh.subscribe(pose_topic_, 1, &EGOReplanFSM::odometryCallback, this); //! pose sub
+    pose_sub_ = nh.subscribe(pose_topic_, 1, &EGOReplanFSM::poseCallback, this); //! pose sub
     path_pub_ = nh.advertise<nav_msgs::Path>("/search_node/trajectory_position", 1);
     path_sub_ = nh.subscribe("/search_node/trajectory_position", 1, &EGOReplanFSM::goalCallback, this);
 
@@ -177,28 +177,28 @@ namespace ego_planner
     // cout << "first pose: x: " << msg.poses[0].pose.position.x << ", y: " << msg.poses[0].pose.position.y << ", z: " << msg.poses[0].pose.position.z << endl; 
   }
 
-  // void EGOReplanFSM::odometryCallback(const nav_msgs::OdometryConstPtr &msg)
-  // {
-  //   // cout << "Entered odom callback" << endl;
-  //   odom_pos_(0) = msg->pose.pose.position.x;
-  //   odom_pos_(1) = msg->pose.pose.position.y;
-  //   odom_pos_(2) = msg->pose.pose.position.z;
+  void EGOReplanFSM::odometryCallback(const nav_msgs::OdometryConstPtr &msg)
+  {
+    // cout << "Entered odom callback" << endl;
+    // odom_pos_(0) = msg->pose.pose.position.x;
+    // odom_pos_(1) = msg->pose.pose.position.y;
+    // odom_pos_(2) = msg->pose.pose.position.z;
 
-  //   odom_vel_(0) = msg->twist.twist.linear.x;
-  //   odom_vel_(1) = msg->twist.twist.linear.y;
-  //   odom_vel_(2) = msg->twist.twist.linear.z;
+    odom_vel_(0) = msg->twist.twist.linear.x;
+    odom_vel_(1) = msg->twist.twist.linear.y;
+    odom_vel_(2) = msg->twist.twist.linear.z;
 
-  //   //odom_acc_ = estimateAcc( msg );
+    //odom_acc_ = estimateAcc( msg );
 
-  //   odom_orient_.w() = msg->pose.pose.orientation.w;
-  //   odom_orient_.x() = msg->pose.pose.orientation.x;
-  //   odom_orient_.y() = msg->pose.pose.orientation.y;
-  //   odom_orient_.z() = msg->pose.pose.orientation.z;
+    // odom_orient_.w() = msg->pose.pose.orientation.w;
+    // odom_orient_.x() = msg->pose.pose.orientation.x;
+    // odom_orient_.y() = msg->pose.pose.orientation.y;
+    // odom_orient_.z() = msg->pose.pose.orientation.z;
 
-  //   have_odom_ = true;
-  // }
+    // have_odom_ = true;
+  }
 
-  void EGOReplanFSM::odometryCallback(const geometry_msgs::PoseStamped &msg)
+  void EGOReplanFSM::poseCallback(const geometry_msgs::PoseStamped &msg)
   {
     // cout << "Entered odom callback" << endl;
     odom_pos_(0) = msg.pose.position.x;
@@ -824,7 +824,7 @@ namespace ego_planner
 
     /* publish trajectory as nav_msgs/Path path */
     // cout << "we are going to publishhhh trajectory!!!!!!!!!!!\n";
-    constexpr double time_step = 0.1;  // Time step for evaluating the B-spline //! change to 0.01?
+    constexpr double time_step = 0.01;  // Time step for evaluating the B-spline //! change to 0.01?
     auto info = &planner_manager_->local_data_;
 
     // double t_start = info->start_time_.toSec();

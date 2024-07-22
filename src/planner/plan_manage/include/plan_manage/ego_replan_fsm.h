@@ -92,7 +92,7 @@ namespace ego_planner
     ros::NodeHandle node_;
     ros::Timer exec_timer_, safety_timer_;
     ros::Subscriber waypoint_sub_, odom_sub_, swarm_trajs_sub_, broadcast_bspline_sub_, trigger_sub_;
-    ros::Subscriber path_sub_;
+    ros::Subscriber path_sub_, pose_sub_;
     ros::Publisher replan_pub_, new_pub_, bspline_pub_, data_disp_pub_, swarm_trajs_pub_, broadcast_bspline_pub_;
     ros::Publisher path_pub_;
 
@@ -117,8 +117,8 @@ namespace ego_planner
     void waypointCallback(const geometry_msgs::PoseStamped &msg);
     // void waypointCallback(const geometry_msgs::PoseStampedPtr &msg);
     void triggerCallback(const geometry_msgs::PoseStampedPtr &msg);
-    // void odometryCallback(const nav_msgs::OdometryConstPtr &msg);
-    void odometryCallback(const geometry_msgs::PoseStamped &msg);
+    void odometryCallback(const nav_msgs::OdometryConstPtr &msg);
+    void poseCallback(const geometry_msgs::PoseStamped &msg);
     void swarmTrajsCallback(const traj_utils::MultiBsplinesPtr &msg);
     void BroadcastBsplineCallback(const traj_utils::BsplinePtr &msg);
     // void goalCb(const geometry_msgs::PoseStamped::ConstPtr& msg);
