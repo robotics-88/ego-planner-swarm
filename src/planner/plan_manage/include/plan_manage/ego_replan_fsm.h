@@ -85,13 +85,14 @@ namespace ego_planner
     nav_msgs::Path path_msg;
 
 
+
     bool flag_escape_emergency_;
 
     /* ROS utils */
     ros::NodeHandle node_;
     ros::Timer exec_timer_, safety_timer_;
     ros::Subscriber waypoint_sub_, odom_sub_, swarm_trajs_sub_, broadcast_bspline_sub_, trigger_sub_;
-    // ros::Subscriber goal_sub;
+    ros::Subscriber path_sub_;
     ros::Publisher replan_pub_, new_pub_, bspline_pub_, data_disp_pub_, swarm_trajs_pub_, broadcast_bspline_pub_;
     ros::Publisher path_pub_;
 
@@ -116,16 +117,20 @@ namespace ego_planner
     void waypointCallback(const geometry_msgs::PoseStamped &msg);
     // void waypointCallback(const geometry_msgs::PoseStampedPtr &msg);
     void triggerCallback(const geometry_msgs::PoseStampedPtr &msg);
-    void odometryCallback(const nav_msgs::OdometryConstPtr &msg);
+    // void odometryCallback(const nav_msgs::OdometryConstPtr &msg);
+    void odometryCallback(const geometry_msgs::PoseStamped &msg);
     void swarmTrajsCallback(const traj_utils::MultiBsplinesPtr &msg);
     void BroadcastBsplineCallback(const traj_utils::BsplinePtr &msg);
     // void goalCb(const geometry_msgs::PoseStamped::ConstPtr& msg);
     // void planPathToGoal(const Eigen::Vector3d& goal);
     // bool isGoalAchieved(const Eigen::Vector3d& goal);
     // nav_msgs::Path convertTrajectoryToPath(const std::vector<Eigen::Vector3d>& waypoints, const ros::Time& stamp, const std::string& frame_id);
+    std::string pose_topic_;
     
     bool checkCollision();
     void publishSwarmTrajs(bool startup_pub);
+    void publishPath();
+    void goalCallback(const nav_msgs::Path &msg);
 
   public:
     EGOReplanFSM(/* args */)

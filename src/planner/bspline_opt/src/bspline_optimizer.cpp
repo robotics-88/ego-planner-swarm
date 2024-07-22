@@ -404,7 +404,7 @@ namespace ego_planner
     }
 
     /*** Segment the initial trajectory according to obstacles ***/
-    cout << "segmenting initil traj" << endl;
+    // cout << "segmenting initil traj" << endl;
     constexpr int ENOUGH_INTERVAL = 2;
     double step_size = grid_map_->getResolution() / ((init_points.col(0) - init_points.rightCols(1)).norm() / (init_points.cols() - 1)) / 1.5;
     int in_id = -1, out_id = -1;
@@ -423,7 +423,7 @@ namespace ego_planner
         // cout << "occ map generated\n";
         if (occ && !last_occ)
         {
-          cout << "1st if\n";
+          // cout << "1st if\n";
           if (same_occ_state_times > ENOUGH_INTERVAL || i == order_)
           {
             in_id = i - 1;
@@ -493,7 +493,7 @@ namespace ego_planner
 
     /*** calculate bounds ***/
     int id_low_bound, id_up_bound;
-    cout << "calculatin bounds\n";
+    // cout << "calculatin bounds\n";
     vector<std::pair<int, int>> bounds(segment_ids.size());
     for (size_t i = 0; i < segment_ids.size(); i++)
     {
@@ -566,14 +566,14 @@ namespace ego_planner
     /*** Assign data to each segment ***/
     for (size_t i = 0; i < segment_ids.size(); i++)
     {
-      cout << "assinging data to eaxh segment\n";
+      // cout << "assinging data to eaxh segment\n";
       // step 1
-      cout << "entering step1\n";
+      // cout << "entering step1\n";
       for (int j = adjusted_segment_ids[i].first; j <= adjusted_segment_ids[i].second; ++j)
         cps_.flag_temp[j] = false;
 
       // step 2
-      cout << "entering step 2\n";
+      // cout << "entering step 2\n";
       int got_intersection_id = -1;
       for (int j = segment_ids[i].first + 1; j < segment_ids[i].second; ++j)
       {
@@ -637,7 +637,7 @@ namespace ego_planner
       /* Corner case: the segment length is too short. Here the control points may outside the A* path, leading to opposite gradient direction. So I have to take special care of it */
       if (segment_ids[i].second - segment_ids[i].first == 1)
       {
-        cout << "corner case\n";
+        // cout << "corner case\n";
         Eigen::Vector3d ctrl_pts_law(init_points.col(segment_ids[i].second) - init_points.col(segment_ids[i].first)), intersection_point;
         Eigen::Vector3d middle_point = (init_points.col(segment_ids[i].second) + init_points.col(segment_ids[i].first)) / 2;
         int Astar_id = a_star_pathes[i].size() / 2, last_Astar_id; // Let "Astar_id = id_of_the_most_far_away_Astar_point" will be better, but it needs more computation
@@ -675,7 +675,7 @@ namespace ego_planner
       }
 
       //step 3
-      cout << "step3 in optimizer" << endl;
+      // cout << "step3 in optimizer" << endl;
       if (got_intersection_id >= 0)
       {
         for (int j = got_intersection_id + 1; j <= adjusted_segment_ids[i].second; ++j)

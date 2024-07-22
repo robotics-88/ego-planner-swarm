@@ -404,7 +404,8 @@ void DroneDetector::detect(int drone_id, Eigen::Vector2i &true_pixel)
 
     geometry_msgs::PoseStamped out_msg;
     out_msg.header.stamp = my_last_camera_stamp_;
-    out_msg.header.frame_id = "/drone_detect";
+    // out_msg.header.frame_id = "/drone_detect";
+    out_msg.header.frame_id = "map";
     out_msg.pose.position.x = pose_error(0);
     out_msg.pose.position.y = pose_error(1);
     out_msg.pose.position.z = pose_error(2);

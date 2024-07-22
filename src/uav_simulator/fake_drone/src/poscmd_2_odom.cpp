@@ -23,7 +23,7 @@ void pubOdom()
 {	
 	nav_msgs::Odometry odom;
 	odom.header.stamp    = ros::Time::now();
-	odom.header.frame_id = "world";
+	odom.header.frame_id = "map";
 
 	if(rcv_cmd)
 	{

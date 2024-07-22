@@ -101,14 +101,14 @@ public:
   {
     /* detetrmine segment num */
     int idx = 0;
-    std::cout << "times: " << times[idx] << ", t: " << t << std::endl;
+    // std::cout << "times: " << times[idx] << ", t: " << t << std::endl;
     while (times[idx] + 1e-4 < t)
     {
-      std::cout << "stuck in the while loop" << std::endl;
+      // std::cout << "stuck in the while loop" << std::endl;
       t -= times[idx];
       ++idx;
     }
-    std::cout << "evalVel outside while\n";
+    // std::cout << "evalVel outside while\n";
     /* evaluation */
     int order = cxs[idx].size();
     Eigen::VectorXd vx(order - 1), vy(order - 1), vz(order - 1);

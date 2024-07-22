@@ -45,10 +45,10 @@ namespace ego_planner
                                         Eigen::Vector3d local_target_vel, bool flag_polyInit, bool flag_randomPolyTraj)
   {
     static int count = 0;
-    printf("\033[47;30m\n[drone %d replan %d]==============================================\033[0m\n", pp_.drone_id, count++);
+    // printf("\033[47;30m\n[drone %d replan %d]==============================================\033[0m\n", pp_.drone_id, count++);
     // cout.precision(3);
-    cout << "start: " << start_pt.transpose() << ", start vel: " << start_vel.transpose() << "\ngoal:" << local_target_pt.transpose() << ", goal_vel: " << local_target_vel.transpose()
-         << endl;
+    // cout << "start: " << start_pt.transpose() << ", start vel: " << start_vel.transpose() << "\ngoal:" << local_target_pt.transpose() << ", goal_vel: " << local_target_vel.transpose()
+        //  << endl;
 
     if ((start_pt - local_target_pt).norm() < 0.2)
     {
@@ -502,7 +502,7 @@ namespace ego_planner
     // insert intermediate points if too far
     vector<Eigen::Vector3d> inter_points;
     const double dist_thresh = 4.0;
-    cout << "Entering loop for inter_points" << endl;
+    // cout << "Entering loop for inter_points" << endl;
     for (size_t i = 0; i < points.size() - 1; ++i)
     {
       inter_points.push_back(points.at(i));
@@ -511,7 +511,7 @@ namespace ego_planner
       if (dist > dist_thresh)
       {
         int id_num = floor(dist / dist_thresh) + 1;
-        cout << "id_num: " << id_num << endl;
+        // cout << "id_num: " << id_num << endl;
         for (int j = 1; j < id_num; ++j)
         {
           Eigen::Vector3d inter_pt =
