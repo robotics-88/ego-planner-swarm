@@ -1,59 +1,44 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(traj_utils)
 
 set(CMAKE_BUILD_TYPE "Release")
-set(CMAKE_CXX_FLAGS "-std=c++11")
+ADD_COMPILE_OPTIONS(-std=c++17 )
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -g")
 
-find_package(catkin REQUIRED COMPONENTS
-  #bspline_opt
-  #path_searching
-  roscpp
-  std_msgs
-  geometry_msgs
-  message_generation
-  #cv_bridge
-)
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
 
 find_package(Eigen3 REQUIRED)
 find_package(PCL 1.7 REQUIRED)
 
 # Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  Bspline.msg
-  DataDisp.msg
-  MultiBsplines.msg
-  )
-  
+set(msg_files
+  msg/Bspline.msg
+  msg/DataDisp.msg
+  msg/MultiBsplines.msg
+)
+
 # Generate added messages and services with any dependencies listed here
-generate_messages(
+rosidl_generate_interfaces(${PROJECT_NAME}
+  ${msg_files}
   DEPENDENCIES
-  std_msgs
   geometry_msgs
+  std_msgs
 )
 
-catkin_package(
- INCLUDE_DIRS include
- LIBRARIES traj_utils 
- CATKIN_DEPENDS message_runtime
-#  DEPENDS system_lib
-)
-
-include_directories( 
-    SYSTEM 
-    include 
-    ${catkin_INCLUDE_DIRS}
+include_directories( include 
     ${Eigen3_INCLUDE_DIRS} 
     ${PCL_INCLUDE_DIRS}
 )
 
-link_directories(${PCL_LIBRARY_DIRS})
+link_directories(${PCL_LIB_DIR})
 
-add_library( traj_utils
+add_library( traj_utils SHARED
     src/planning_visualization.cpp 
     src/polynomial_traj.cpp 
     )
-target_link_libraries( traj_utils
-    ${catkin_LIBRARIES} 
-    )  
+
+ament_package()
