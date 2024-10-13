@@ -201,14 +201,14 @@ namespace ego_planner
     }
   }
 
-  void EGOReplanFSM::triggerCallback(const geometry_msgs::PoseStampedPtr &msg)
+  void EGOReplanFSM::triggerCallback(const geometry_msgs::msg::PoseStampedPtr &msg)
   {
     have_trigger_ = true;
     cout << "Triggered!" << endl;
     init_pt_ = odom_pos_;
   }
 
-  void EGOReplanFSM::waypointCallback(const geometry_msgs::PoseStampedPtr &msg)
+  void EGOReplanFSM::waypointCallback(const geometry_msgs::msg::PoseStampedPtr &msg)
   {
     if (msg->pose.position.z < -0.1)
       return;
@@ -222,7 +222,7 @@ namespace ego_planner
     planNextWaypoint(end_wp);
   }
 
-  void EGOReplanFSM::odometryCallback(const nav_msgs::OdometryConstPtr &msg)
+  void EGOReplanFSM::odometryCallback(const nav_msgs::msg::Odometry::ConstSharedPtr &msg)
   {
     odom_pos_(0) = msg->pose.pose.position.x;
     odom_pos_(1) = msg->pose.pose.position.y;
@@ -248,10 +248,10 @@ namespace ego_planner
     if ((int)id == planner_manager_->pp_.drone_id)
       return;
 
-    if (abs((ros::Time::now() - msg->start_time).toSec()) > 0.25)
+    if (abs((rclcpp::Time::now() - msg->start_time).toSec()) > 0.25)
     {
       ROS_ERROR("Time difference is too large! Local - Remote Agent %d = %fs",
-                msg->drone_id, (ros::Time::now() - msg->start_time).toSec());
+                msg->drone_id, (rclcpp::Time::now() - msg->start_time).toSec());
       return;
     }
 
@@ -311,7 +311,7 @@ namespace ego_planner
     planner_manager_->swarm_trajs_buf_[id].start_pos_ = planner_manager_->swarm_trajs_buf_[id].position_traj_.evaluateDeBoorT(0);
 
     planner_manager_->swarm_trajs_buf_[id].start_time_ = msg->start_time;
-    // planner_manager_->swarm_trajs_buf_[id].start_time_ = ros::Time::now(); // Un-reliable time sync
+    // planner_manager_->swarm_trajs_buf_[id].start_time_ = rclcpp::Time::now(); // Un-reliable time sync
 
     /* Check Collision */
     if (planner_manager_->checkCollision(id))
@@ -428,7 +428,7 @@ namespace ego_planner
     cout << "[FSM]: state: " + state_str[int(exec_state_)] << endl;
   }
 
-  void EGOReplanFSM::execFSMCallback(const ros::TimerEvent &e)
+  void EGOReplanFSM::execFSMCallback(const rclcpp::TimerEvent &e)
   {
     exec_timer_.stop(); // To avoid blockage
 
@@ -546,7 +546,7 @@ namespace ego_planner
     {
       /* determine if need to replan */
       LocalTrajData *info = &planner_manager_->local_data_;
-      ros::Time time_now = ros::Time::now();
+      rclcpp::Time time_now = rclcpp::Time::now();
       double t_cur = (time_now - info->start_time_).toSec();
       t_cur = min(info->duration_, t_cur);
 
@@ -608,7 +608,7 @@ namespace ego_planner
     }
     }
 
-    data_disp_.header.stamp = ros::Time::now();
+    data_disp_.header.stamp = rclcpp::Time::now();
     data_disp_pub_.publish(data_disp_);
 
   force_return:;
@@ -641,7 +641,7 @@ namespace ego_planner
   {
 
     LocalTrajData *info = &planner_manager_->local_data_;
-    ros::Time time_now = ros::Time::now();
+    rclcpp::Time time_now = rclcpp::Time::now();
     double t_cur = (time_now - info->start_time_).toSec();
 
     //cout << "info->velocity_traj_=" << info->velocity_traj_.get_control_points() << endl;
@@ -674,7 +674,7 @@ namespace ego_planner
     return true;
   }
 
-  void EGOReplanFSM::checkCollisionCallback(const ros::TimerEvent &e)
+  void EGOReplanFSM::checkCollisionCallback(const rclcpp::TimerEvent &e)
   {
 
     LocalTrajData *info = &planner_manager_->local_data_;
@@ -693,10 +693,10 @@ namespace ego_planner
 
     /* ---------- check trajectory ---------- */
     constexpr double time_step = 0.01;
-    double t_cur = (ros::Time::now() - info->start_time_).toSec();
+    double t_cur = (rclcpp::Time::now() - info->start_time_).toSec();
     Eigen::Vector3d p_cur = info->position_traj_.evaluateDeBoorT(t_cur);
     const double CLEARANCE = 1.0 * planner_manager_->getSwarmClearance();
-    double t_cur_global = ros::Time::now().toSec();
+    double t_cur_global = rclcpp::Time::now().toSec();
     double t_2_3 = info->duration_ * 2 / 3;
     for (double t = t_cur; t < info->duration_; t += time_step)
     {
@@ -777,7 +777,7 @@ namespace ego_planner
       bspline.pos_pts.reserve(pos_pts.cols());
       for (int i = 0; i < pos_pts.cols(); ++i)
       {
-        geometry_msgs::Point pt;
+        geometry_msgs::msg::Point pt;
         pt.x = pos_pts(0, i);
         pt.y = pos_pts(1, i);
         pt.z = pos_pts(2, i);
@@ -818,7 +818,7 @@ namespace ego_planner
     bspline.pos_pts.reserve(pos_pts.cols());
     for (int i = 0; i < pos_pts.cols(); ++i)
     {
-      geometry_msgs::Point pt;
+      geometry_msgs::msg::Point pt;
       pt.x = pos_pts(0, i);
       pt.y = pos_pts(1, i);
       pt.z = pos_pts(2, i);
@@ -872,7 +872,7 @@ namespace ego_planner
     bspline.pos_pts.reserve(pos_pts.cols());
     for (int i = 0; i < pos_pts.cols(); ++i)
     {
-      geometry_msgs::Point pt;
+      geometry_msgs::msg::Point pt;
       pt.x = pos_pts(0, i);
       pt.y = pos_pts(1, i);
       pt.z = pos_pts(2, i);

@@ -1,14 +1,12 @@
 #include "bspline_opt/uniform_bspline.h"
-#include "nav_msgs/Odometry.h"
+#include "nav_msgs/msg/odometry.hpp"
 #include "traj_utils/Bspline.h"
 #include "quadrotor_msgs/PositionCommand.h"
-#include "std_msgs/Empty.h"
-#include "visualization_msgs/Marker.h"
-#include <ros/ros.h>
+#include "rclcpp/rclcpp.hpp"
 
 ros::Publisher pos_cmd_pub;
 
-quadrotor_msgs::PositionCommand cmd;
+quadrotor_msgs::msg::PositionCommand cmd;
 double pos_gain[3] = {0, 0, 0};
 double vel_gain[3] = {0, 0, 0};
 
@@ -17,14 +15,14 @@ using ego_planner::UniformBspline;
 bool receive_traj_ = false;
 vector<UniformBspline> traj_;
 double traj_duration_;
-ros::Time start_time_;
+rclcpp::Time start_time_;
 int traj_id_;
 
 // yaw control
 double last_yaw_, last_yaw_dot_;
 double time_forward_;
 
-void bsplineCallback(traj_utils::BsplineConstPtr msg)
+void bsplineCallback(traj_utils::Bspline::ConstSharedPtr msg)
 {
   // parse pos traj
 
@@ -68,7 +66,7 @@ void bsplineCallback(traj_utils::BsplineConstPtr msg)
   receive_traj_ = true;
 }
 
-std::pair<double, double> calculate_yaw(double t_cur, Eigen::Vector3d &pos, ros::Time &time_now, ros::Time &time_last)
+std::pair<double, double> calculate_yaw(double t_cur, Eigen::Vector3d &pos, rclcpp::Time &time_now, rclcpp::Time &time_last)
 {
   constexpr double PI = 3.1415926;
   constexpr double YAW_DOT_MAX_PER_SEC = PI;
@@ -160,19 +158,19 @@ std::pair<double, double> calculate_yaw(double t_cur, Eigen::Vector3d &pos, ros:
   return yaw_yawdot;
 }
 
-void cmdCallback(const ros::TimerEvent &e)
+void cmdCallback(const rclcpp::TimerEvent &e)
 {
   /* no publishing before receive traj_ */
   if (!receive_traj_)
     return;
 
-  ros::Time time_now = ros::Time::now();
+  rclcpp::Time time_now = rclcpp::Time::now();
   double t_cur = (time_now - start_time_).toSec();
 
   Eigen::Vector3d pos(Eigen::Vector3d::Zero()), vel(Eigen::Vector3d::Zero()), acc(Eigen::Vector3d::Zero()), pos_f;
   std::pair<double, double> yaw_yawdot(0, 0);
 
-  static ros::Time time_last = ros::Time::now();
+  static rclcpp::Time time_last = rclcpp::Time::now();
   if (t_cur < traj_duration_ && t_cur >= 0.0)
   {
     pos = traj_[0].evaluateDeBoorT(t_cur);
@@ -206,7 +204,7 @@ void cmdCallback(const ros::TimerEvent &e)
 
   cmd.header.stamp = time_now;
   cmd.header.frame_id = "world";
-  cmd.trajectory_flag = quadrotor_msgs::PositionCommand::TRAJECTORY_STATUS_READY;
+  cmd.trajectory_flag = quadrotor_msgs::msg::PositionCommand::TRAJECTORY_STATUS_READY;
   cmd.trajectory_id = traj_id_;
 
   cmd.position.x = pos(0);
@@ -237,9 +235,9 @@ int main(int argc, char **argv)
 
   ros::Subscriber bspline_sub = nh.subscribe("planning/bspline", 10, bsplineCallback);
 
-  pos_cmd_pub = nh.advertise<quadrotor_msgs::PositionCommand>("/position_cmd", 50);
+  pos_cmd_pub = nh.advertise<quadrotor_msgs::msg::PositionCommand>("/position_cmd", 50);
 
-  ros::Timer cmd_timer = nh.createTimer(ros::Duration(0.01), cmdCallback);
+  rclcpp::Timer cmd_timer = nh.createTimer(ros::Duration(0.01), cmdCallback);
 
   /* control parameter */
   cmd.kx[0] = pos_gain[0];

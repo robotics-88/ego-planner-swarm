@@ -6,7 +6,7 @@
 #include <bspline_opt/uniform_bspline.h>
 #include <plan_env/grid_map.h>
 #include <plan_env/obj_predictor.h>
-#include <ros/ros.h>
+#include "rclcpp/rclcpp.hpp"
 #include "bspline_opt/lbfgs.hpp"
 #include <traj_utils/plan_container.hpp>
 

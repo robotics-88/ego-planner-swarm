@@ -6,10 +6,10 @@
 //#include <bspline_opt/uniform_bspline.h>
 #include <iostream>
 //#include <bspline_opt/polynomial_traj.h>
-#include <ros/ros.h>
+#include "rclcpp/rclcpp.hpp"
 #include <vector>
-#include <visualization_msgs/Marker.h>
-#include <visualization_msgs/MarkerArray.h>
+#include <visualization_msgs/msg/marker.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 #include <stdlib.h>
 
 using std::vector;
@@ -37,9 +37,9 @@ namespace ego_planner
 
     void displayMarkerList(ros::Publisher &pub, const vector<Eigen::Vector3d> &list, double scale,
                            Eigen::Vector4d color, int id,  bool show_sphere = true);
-    void generatePathDisplayArray(visualization_msgs::MarkerArray &array,
+    void generatePathDisplayArray(visualization_msgs::msg::MarkerArray &array,
                                   const vector<Eigen::Vector3d> &list, double scale, Eigen::Vector4d color, int id);
-    void generateArrowDisplayArray(visualization_msgs::MarkerArray &array,
+    void generateArrowDisplayArray(visualization_msgs::msg::MarkerArray &array,
                                    const vector<Eigen::Vector3d> &list, double scale, Eigen::Vector4d color, int id);
     void displayGoalPoint(Eigen::Vector3d goal_point, Eigen::Vector4d color, const double scale, int id);
     void displayGlobalPathList(vector<Eigen::Vector3d> global_pts, const double scale, int id);

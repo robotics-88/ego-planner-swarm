@@ -2,7 +2,7 @@
 #define _DYN_A_STAR_H_
 
 #include <iostream>
-#include <ros/ros.h>
+#include "rclcpp/rclcpp.hpp"
 #include <ros/console.h>
 #include <Eigen/Eigen>
 #include <plan_env/grid_map.h>

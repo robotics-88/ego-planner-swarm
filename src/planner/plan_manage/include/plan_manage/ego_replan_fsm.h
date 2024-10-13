@@ -4,18 +4,17 @@
 #include <Eigen/Eigen>
 #include <algorithm>
 #include <iostream>
-#include <nav_msgs/Path.h>
-#include <sensor_msgs/Imu.h>
-#include <ros/ros.h>
-#include <std_msgs/Empty.h>
+#include <nav_msgs/msg/path.hpp>
+#include <sensor_msgs/msg/imu.hpp>
+#include "rclcpp/rclcpp.hpp"
 #include <vector>
-#include <visualization_msgs/Marker.h>
+#include <visualization_msgs/msg/marker.hpp>
 
 #include <bspline_opt/bspline_optimizer.h>
 #include <plan_env/grid_map.h>
 #include <traj_utils/Bspline.h>
 #include <traj_utils/MultiBsplines.h>
-#include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/msg/pose_stamped.hpp>
 #include <traj_utils/DataDisp.h>
 #include <plan_manage/planner_manager.h>
 #include <traj_utils/planning_visualization.h>
@@ -81,7 +80,7 @@ namespace ego_planner
 
     /* ROS utils */
     ros::NodeHandle node_;
-    ros::Timer exec_timer_, safety_timer_;
+    rclcpp::Timer exec_timer_, safety_timer_;
     ros::Subscriber waypoint_sub_, odom_sub_, swarm_trajs_sub_, broadcast_bspline_sub_, trigger_sub_;
     ros::Publisher replan_pub_, new_pub_, bspline_pub_, data_disp_pub_, swarm_trajs_pub_, broadcast_bspline_pub_;
 
@@ -101,11 +100,11 @@ namespace ego_planner
     void getLocalTarget();
 
     /* ROS functions */
-    void execFSMCallback(const ros::TimerEvent &e);
-    void checkCollisionCallback(const ros::TimerEvent &e);
-    void waypointCallback(const geometry_msgs::PoseStampedPtr &msg);
-    void triggerCallback(const geometry_msgs::PoseStampedPtr &msg);
-    void odometryCallback(const nav_msgs::OdometryConstPtr &msg);
+    void execFSMCallback(const rclcpp::TimerEvent &e);
+    void checkCollisionCallback(const rclcpp::TimerEvent &e);
+    void waypointCallback(const geometry_msgs::msg::PoseStampedPtr &msg);
+    void triggerCallback(const geometry_msgs::msg::PoseStampedPtr &msg);
+    void odometryCallback(const nav_msgs::msg::Odometry::ConstSharedPtr &msg);
     void swarmTrajsCallback(const traj_utils::MultiBsplinesPtr &msg);
     void BroadcastBsplineCallback(const traj_utils::BsplinePtr &msg);
 

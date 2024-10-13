@@ -11,6 +11,9 @@ find_package(OpenCV REQUIRED)
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(pcl_conversions REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(message_filters REQUIRED)
@@ -31,6 +34,16 @@ add_library( plan_env SHARED
     src/raycast.cpp
     src/obj_predictor.cpp 
     )
+
+ament_target_dependencies(plan_env 
+    cv_bridge
+    nav_msgs
+    pcl_conversions
+    rclcpp
+    sensor_msgs
+    visualization_msgs
+  )
+
 target_link_libraries( plan_env
     ${PCL_LIBRARIES}
     ${OpenCV_LIBS}

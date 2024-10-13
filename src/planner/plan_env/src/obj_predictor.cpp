@@ -31,9 +31,9 @@ namespace fast_planner {
 
 // int ObjHistory::queue_size_;
 // int ObjHistory::skip_num_;
-// ros::Time ObjHistory::global_start_time_;
+// rclcpp::Time ObjHistory::global_start_time_;
 
-void ObjHistory::init(int id, int skip_num, int queue_size, ros::Time global_start_time) {
+void ObjHistory::init(int id, int skip_num, int queue_size, rclcpp::Time global_start_time) {
   clear();
   skip_ = 0;
   obj_idx_ = id;
@@ -42,13 +42,13 @@ void ObjHistory::init(int id, int skip_num, int queue_size, ros::Time global_sta
   global_start_time_ = global_start_time;
 }
 
-void ObjHistory::poseCallback(const geometry_msgs::PoseStampedConstPtr& msg) {
+void ObjHistory::poseCallback(const geometry_msgs::msg::PoseStamped::ConstSharedPtr& msg) {
   ++skip_;
   if (skip_ < skip_num_) return;
 
   Eigen::Vector4d pos_t;
   pos_t(0) = msg->pose.position.x, pos_t(1) = msg->pose.position.y, pos_t(2) = msg->pose.position.z;
-  pos_t(3) = (ros::Time::now() - global_start_time_).toSec();
+  pos_t(3) = (rclcpp::Time::now() - global_start_time_).toSec();
 
   history_.push_back(pos_t);
   // cout << "idx: " << obj_idx_ << "pos_t: " << pos_t.transpose() << endl;
@@ -91,14 +91,14 @@ void ObjPredictor::init() {
     scale_init_[i] = false;
 
   /* subscribe to pose */
-  ros::Time t_now = ros::Time::now();
+  rclcpp::Time t_now = rclcpp::Time::now();
   for (int i = 0; i < obj_num_; i++) {
     shared_ptr<ObjHistory> obj_his(new ObjHistory);
 
     obj_his->init(i, skip_nums, queue_size, t_now);
     obj_histories_.push_back(obj_his);
 
-    ros::Subscriber pose_sub = node_handle_.subscribe<geometry_msgs::PoseStamped>(
+    ros::Subscriber pose_sub = node_handle_.subscribe<geometry_msgs::msg::PoseStamped>(
         "/dynamic/pose_" + std::to_string(i), 10, &ObjHistory::poseCallback, obj_his.get());
 
     pose_subs_.push_back(pose_sub);
@@ -106,7 +106,7 @@ void ObjPredictor::init() {
     predict_trajs_->at(i).setGlobalStartTime(t_now);
   }
 
-  marker_sub_ = node_handle_.subscribe<visualization_msgs::Marker>("/dynamic/obj", 10,
+  marker_sub_ = node_handle_.subscribe<visualization_msgs::msg::Marker>("/dynamic/obj", 10,
                                                                    &ObjPredictor::markerCallback, this);
 
   /* update prediction */
@@ -183,12 +183,12 @@ void ObjPredictor::predictPolyFit() {
   }
 }
 
-void ObjPredictor::predictCallback(const ros::TimerEvent& e) {
+void ObjPredictor::predictCallback(const rclcpp::TimerEvent& e) {
   // predictPolyFit();
   predictConstVel();
 }
 
-void ObjPredictor::markerCallback(const visualization_msgs::MarkerConstPtr& msg) {
+void ObjPredictor::markerCallback(const visualization_msgs::msg::Marker::ConstSharedPtr& msg) {
   int idx = msg->id;
   (*obj_scale_)[idx](0) = msg->scale.x;
   (*obj_scale_)[idx](1) = msg->scale.y;

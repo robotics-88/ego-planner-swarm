@@ -24,7 +24,7 @@
 
 
 #include "visualization_msgs/Marker.h"
-#include <ros/ros.h>
+#include "rclcpp/rclcpp.hpp"
 
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Odometry.h>
@@ -60,9 +60,9 @@ uniform_real_distribution<double> rand_scale;
 uniform_real_distribution<double> rand_yaw_dot;
 uniform_real_distribution<double> rand_yaw;
 
-ros::Time time_update, time_change;
+rclcpp::Time time_update, time_change;
 
-void updateCallback(const ros::TimerEvent& e);
+void updateCallback(const rclcpp::TimerEvent& e);
 void visualizeObj(int id);
 
 int main(int argc, char** argv) {
@@ -84,14 +84,14 @@ int main(int argc, char** argv) {
   node.param("obj_generator/interval", _interval, 100.0);
   node.param("obj_generator/input_type", _input_type, 1);
 
-  obj_pub = node.advertise<visualization_msgs::Marker>("/dynamic/obj", 10);
+  obj_pub = node.advertise<visualization_msgs::msg::Marker>("/dynamic/obj", 10);
   for (int i = 0; i < obj_num; ++i) {
     ros::Publisher pose_pub =
-        node.advertise<geometry_msgs::PoseStamped>("/dynamic/pose_" + to_string(i), 10);
+        node.advertise<geometry_msgs::msg::PoseStamped>("/dynamic/pose_" + to_string(i), 10);
     pose_pubs.push_back(pose_pub);
   }
 
-  ros::Timer update_timer = node.createTimer(ros::Duration(1 / 30.0), updateCallback);
+  rclcpp::Timer update_timer = node.createTimer(ros::Duration(1 / 30.0), updateCallback);
   cout << "[dynamic]: initialize with " + to_string(obj_num) << " moving obj." << endl;
   ros::Duration(1.0).sleep();
 
@@ -136,8 +136,8 @@ int main(int argc, char** argv) {
     obj_models.push_back(model);
   }
 
-  time_update = ros::Time::now();
-  time_change = ros::Time::now();
+  time_update = rclcpp::Time::now();
+  time_change = rclcpp::Time::now();
 
   /* ---------- start loop ---------- */
   ros::spin();
@@ -145,8 +145,8 @@ int main(int argc, char** argv) {
   return 0;
 }
 
-void updateCallback(const ros::TimerEvent& e) {
-  ros::Time time_now = ros::Time::now();
+void updateCallback(const rclcpp::TimerEvent& e) {
+  rclcpp::Time time_now = rclcpp::Time::now();
 
   /* ---------- change input ---------- */
   // double dtc = (time_now - time_change).toSec();
@@ -209,11 +209,11 @@ void visualizeObj(int id) {
   qua = rot;
 
   /* ---------- rviz ---------- */
-  visualization_msgs::Marker mk;
+  visualization_msgs::msg::Marker mk;
   mk.header.frame_id = "world";
-  mk.header.stamp = ros::Time::now();
-  mk.type = visualization_msgs::Marker::CUBE;
-  mk.action = visualization_msgs::Marker::ADD;
+  mk.header.stamp = rclcpp::Time::now();
+  mk.type = visualization_msgs::msg::Marker::CUBE;
+  mk.action = visualization_msgs::msg::Marker::ADD;
   mk.id = id;
 
   mk.scale.x = scale(0), mk.scale.y = scale(1), mk.scale.z = scale(2);
@@ -229,7 +229,7 @@ void visualizeObj(int id) {
   obj_pub.publish(mk);
 
   /* ---------- pose ---------- */
-  geometry_msgs::PoseStamped pose;
+  geometry_msgs::msg::PoseStamped pose;
   pose.header.frame_id = "world";
   pose.header.seq = id;
   pose.pose.position.x = pos(0), pose.pose.position.y = pos(1), pose.pose.position.z = pos(2);

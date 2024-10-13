@@ -778,7 +778,7 @@ namespace ego_planner
     cost = 0.0;
     int end_idx = q.cols() - order_ - (double)(q.cols() - 2 * order_) * 1.0 / 3.0; // Only check the first 2/3 points
     const double CLEARANCE = swarm_clearance_ * 2;
-    double t_now = ros::Time::now().toSec();
+    double t_now = rclcpp::Time::now().toSec();
     constexpr double a = 2.0, b = 1.0, inv_a2 = 1 / a / a, inv_b2 = 1 / b / b;
 
     for (int i = order_; i < end_idx; i++)
@@ -831,7 +831,7 @@ namespace ego_planner
     cost = 0.0;
     int end_idx = q.cols() - order_;
     constexpr double CLEARANCE = 1.5;
-    double t_now = ros::Time::now().toSec();
+    double t_now = rclcpp::Time::now().toSec();
 
     for (int i = order_; i < end_idx; i++)
     {
@@ -1438,7 +1438,7 @@ namespace ego_planner
     int end_id = this->cps_.size; // Free end
     variable_num_ = 3 * (end_id - start_id);
 
-    ros::Time t0 = ros::Time::now(), t1, t2;
+    rclcpp::Time t0 = rclcpp::Time::now(), t1, t2;
     int restart_nums = 0, rebound_times = 0;
     ;
     bool flag_force_return, flag_occ, success;
@@ -1464,9 +1464,9 @@ namespace ego_planner
       lbfgs_params.g_epsilon = 0.01;
 
       /* ---------- optimize ---------- */
-      t1 = ros::Time::now();
+      t1 = rclcpp::Time::now();
       int result = lbfgs::lbfgs_optimize(variable_num_, q, &final_cost, BsplineOptimizer::costFunctionRebound, NULL, BsplineOptimizer::earlyExit, this, &lbfgs_params);
-      t2 = ros::Time::now();
+      t2 = rclcpp::Time::now();
       double time_ms = (t2 - t1).toSec() * 1000;
       double total_time_ms = (t2 - t0).toSec() * 1000;
 
@@ -1716,7 +1716,7 @@ namespace ego_planner
     Eigen::MatrixXd g_fitness = Eigen::MatrixXd::Zero(3, cps_.points.cols());
     Eigen::MatrixXd g_feasibility = Eigen::MatrixXd::Zero(3, cps_.points.cols());
 
-    //time_satrt = ros::Time::now();
+    //time_satrt = rclcpp::Time::now();
 
     calcSmoothnessCost(cps_.points, f_smoothness, g_smoothness);
     calcFitnessCost(cps_.points, f_fitness, g_fitness);

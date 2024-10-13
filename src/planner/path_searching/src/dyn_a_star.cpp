@@ -120,7 +120,7 @@ bool AStar::ConvertToIndexAndAdjustStartEndPoints(Vector3d start_pt, Vector3d en
 
 bool AStar::AstarSearch(const double step_size, Vector3d start_pt, Vector3d end_pt)
 {
-    ros::Time time_1 = ros::Time::now();
+    rclcpp::Time time_1 = rclcpp::Time::now();
     ++rounds_;
 
     step_size_ = step_size;
@@ -170,7 +170,7 @@ bool AStar::AstarSearch(const double step_size, Vector3d start_pt, Vector3d end_
 
         if (current->index(0) == endPtr->index(0) && current->index(1) == endPtr->index(1) && current->index(2) == endPtr->index(2))
         {
-            // ros::Time time_2 = ros::Time::now();
+            // rclcpp::Time time_2 = rclcpp::Time::now();
             // printf("\033[34mA star iter:%d, time:%.3f\033[0m\n",num_iter, (time_2 - time_1).toSec()*1000);
             // if((time_2 - time_1).toSec() > 0.1)
             //     ROS_WARN("Time consume in A star path finding is %f", (time_2 - time_1).toSec() );
@@ -232,7 +232,7 @@ bool AStar::AstarSearch(const double step_size, Vector3d start_pt, Vector3d end_
                         neighborPtr->fScore = tentative_gScore + getHeu(neighborPtr, endPtr);
                     }
                 }
-        ros::Time time_2 = ros::Time::now();
+        rclcpp::Time time_2 = rclcpp::Time::now();
         if ((time_2 - time_1).toSec() > 0.2)
         {
             ROS_WARN("Failed in A star path searching !!! 0.2 seconds time limit exceeded.");
@@ -240,7 +240,7 @@ bool AStar::AstarSearch(const double step_size, Vector3d start_pt, Vector3d end_
         }
     }
 
-    ros::Time time_2 = ros::Time::now();
+    rclcpp::Time time_2 = rclcpp::Time::now();
 
     if ((time_2 - time_1).toSec() > 0.1)
         ROS_WARN("Time consume in A star path finding is %.3fs, iter=%d", (time_2 - time_1).toSec(), num_iter);
